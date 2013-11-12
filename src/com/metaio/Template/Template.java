@@ -1,6 +1,9 @@
 // Copyright 2007-2013 metaio GmbH. All rights reserved.
 package com.metaio.Template;
 
+import java.io.FileInputStream;
+
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -26,15 +29,19 @@ public class Template extends ARViewActivity
 {
 
 	private IGeometry mModel;
+	private IGeometry kaGeBunShin;
+	
 	private MetaioSDKCallbackHandler mCallbackHandler;
 	// addition
 	private Vector2d mMidPoint;
 	float x;
 	float y;
 	double lastDis = 0;
+	boolean isStartAnimation = false;
 	
 	private int mGestureMask;
 	private GestureHandlerAndroid mGestureHandler;
+	private MediaPlayer mMediaPlayer;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
@@ -47,6 +54,16 @@ public class Template extends ARViewActivity
 		mGestureHandler = new GestureHandlerAndroid(metaioSDK, mGestureMask);
 		
 		mMidPoint = new Vector2d();
+		
+		try {
+			mMediaPlayer = new MediaPlayer();
+			FileInputStream fis = new FileInputStream(AssetsManager.getAssetPath("psy_gangnamStyle.mp3"));
+			mMediaPlayer.setDataSource(fis.getFD());
+			mMediaPlayer.prepare();
+			fis.close();
+		} catch (Exception e) {
+			mMediaPlayer = null;
+		}
 	}
 	
 	@Override
@@ -87,7 +104,7 @@ public class Template extends ARViewActivity
 		}
 		*/
 		//pinch model
-		if(event.getPointerCount() == 2 && mModel.isVisible()){
+		/*if(event.getPointerCount() == 2 && mModel.isVisible()){
 			float x = event.getX(0) - event.getX(1);
 			float y = event.getY(0) - event.getY(1);
 			double nowDis = Math.sqrt(x * x + y * y);
@@ -97,7 +114,7 @@ public class Template extends ARViewActivity
 			else if(lastDis > nowDis)
 				mModel.setScale(mModel.getScale().subtract(new Vector3d(0.001f)));	// tiger is 1f
 			lastDis = nowDis;
-		}
+		}*/
 		return true;
 	}
 	
@@ -108,24 +125,21 @@ public class Template extends ARViewActivity
 		return R.layout.template; 
 	}
 
-
 	public void onButtonClick(View v)
 	{
 		finish();
 	}
-	
 	
 	@Override
 	protected void loadContents() 
 	{
 		try
 		{
-			
 			// Getting a file path for tracking configuration XML file
 			String trackingConfigFile = AssetsManager.getAssetPath("TrackingData_MarkerlessFast.xml");
 			
 			// Assigning tracking configuration
-			boolean result = metaioSDK.setTrackingConfiguration(trackingConfigFile); 
+			boolean result = metaioSDK.setTrackingConfiguration(trackingConfigFile);
 			
 			MetaioDebug.log("Tracking data loaded: " + result); 
 	        
@@ -135,41 +149,70 @@ public class Template extends ARViewActivity
 			{
 				// Loading 3D geometry
 				mModel = metaioSDK.createGeometry(metaioManModel);
+				
 				if (mModel != null) 
 				{
 					mGestureHandler.addObject(mModel, 1);	// gesture addition
 					// Set geometry properties
-					//mModel.setScale(new Vector3d(4.0f, 4.0f, 4.0f));
 					mModel.setTranslation(new Vector3d(0, 0, 0));
 					mModel.setRotation(new Rotation(200f, 0f, 0f));
 					
-					mModel.setScale(0.1f);
-					//mModel.setScale(50f);	// for tiger
-					//mModel.setAnimationSpeed(60f);	// for tiger
-					mModel.setAnimationSpeed(240f);
-					mModel.startAnimation("move_start", false);
+					mModel.setScale(0.08f);
+					mModel.setAnimationSpeed(120f);
 				}
 				else
 					MetaioDebug.log(Log.ERROR, "Error loading geometry: "+metaioManModel);
 			}
 			
-		}       
-		catch (Exception e)
-		{
+		}catch (Exception e){
 			
 		}
 	}
 	
-  
+	private void danceStyle() {
+		String metaioManModel = AssetsManager.getAssetPath("metaioman.md2");
+		kaGeBunShin = metaioSDK.createGeometry(metaioManModel);	// add for kagebunshin
+		
+//		add for test kagebunshin
+		mGestureHandler.addObject(kaGeBunShin, 1);	// gesture addition
+		// Set geometry properties
+		kaGeBunShin.setTranslation(new Vector3d(100, 100, 100));
+		kaGeBunShin.setRotation(new Rotation(200f, 0f, 0f));
+		
+		kaGeBunShin.setScale(0.08f);
+		kaGeBunShin.setAnimationSpeed(120f);
+		
+		kaGeBunShin.setVisible(false);
+		//	add for test kagebunshin
+	}
+	
 	@Override
 	protected void onGeometryTouched(IGeometry geometry) 
 	{
 		//System.out.println("geometry touch");
 		//System.out.println(mModel.getAnimationNames().size());
-		for (int i = 0 ; i < mModel.getAnimationNames().size() ; i++) {
+		/*for (int i = 0 ; i < mModel.getAnimationNames().size() ; i++) {
 			System.out.println(mModel.getAnimationNames().get(i));
+		}*/
+		if(!isStartAnimation){
+			playSound();
+			geometry.startAnimation("dance_start", true);
+			isStartAnimation = true;
 		}
-		geometry.startAnimation("move_start");
+		else{
+			//geometry stop
+		}
+		
+	}
+	
+	private void playSound()
+	{
+		try{
+			MetaioDebug.log("Playing sound");
+			mMediaPlayer.start();
+		}catch (Exception e){
+			MetaioDebug.log("Error playing sound: "+e.getMessage());
+		}
 	}
 	
 	@Override
