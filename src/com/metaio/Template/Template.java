@@ -3,8 +3,11 @@ package com.metaio.Template;
 
 import java.io.FileInputStream;
 
+import android.annotation.SuppressLint;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,6 +18,7 @@ import com.metaio.sdk.MetaioDebug;
 import com.metaio.sdk.jni.EVISUAL_SEARCH_STATE;
 import com.metaio.sdk.jni.GestureHandler;
 import com.metaio.sdk.jni.IGeometry;
+import com.metaio.sdk.jni.IGeometryVector;
 import com.metaio.sdk.jni.IMetaioSDKCallback;
 import com.metaio.sdk.jni.IVisualSearchCallback;
 import com.metaio.sdk.jni.ImageStruct;
@@ -27,9 +31,9 @@ import com.metaio.tools.io.AssetsManager;
 
 public class Template extends ARViewActivity 
 {
-
 	private IGeometry mModel;
-	private IGeometry kaGeBunShin;
+	private IGeometry kaGeBunShin;	// the sub model
+	private IGeometryVector mModelVector;
 	
 	private MetaioSDKCallbackHandler mCallbackHandler;
 	// addition
@@ -38,11 +42,14 @@ public class Template extends ARViewActivity
 	float y;
 	double lastDis = 0;
 	boolean isStartAnimation = false;
+	float radiansConst = (float) 1.5707957651346171970720366937891;	// close 90 degrees
 	
 	private int mGestureMask;
 	private GestureHandlerAndroid mGestureHandler;
 	private MediaPlayer mMediaPlayer;
+	private Handler danceHandler;
 	
+	@SuppressLint("HandlerLeak")
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
 	{
@@ -55,6 +62,7 @@ public class Template extends ARViewActivity
 		
 		mMidPoint = new Vector2d();
 		
+		// music load
 		try {
 			mMediaPlayer = new MediaPlayer();
 			FileInputStream fis = new FileInputStream(AssetsManager.getAssetPath("psy_gangnamStyle.mp3"));
@@ -64,6 +72,41 @@ public class Template extends ARViewActivity
 		} catch (Exception e) {
 			mMediaPlayer = null;
 		}
+		
+		// here according to music time setting dancing style
+		danceHandler = new Handler(){
+			public void handleMessage(Message msg) {	// while get message from Media Control Thread
+				// according to the music to do what you want to do
+				switch (msg.what) {
+				case 1:		// rotate one circle
+					new Thread(){
+						public void run() {
+							IGeometry tmpModel = mModelVector.get(0);
+							for(float i = 0 ; i < (4 * radiansConst) ; i+=0.01){
+								tmpModel.setRotation(new Rotation(-radiansConst, i, 0f));
+								try {
+									Thread.sleep(10);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+							}
+						};
+					}.start();
+					break;
+				case 2:
+					
+					break;
+				case 3:
+					
+					break;
+				case 4:
+					
+					break;
+				default:
+					
+				}
+			};
+		};
 	}
 	
 	@Override
@@ -104,7 +147,7 @@ public class Template extends ARViewActivity
 		}
 		*/
 		//pinch model
-		/*if(event.getPointerCount() == 2 && mModel.isVisible()){
+		if(event.getPointerCount() == 2 && mModel.isVisible()){
 			float x = event.getX(0) - event.getX(1);
 			float y = event.getY(0) - event.getY(1);
 			double nowDis = Math.sqrt(x * x + y * y);
@@ -114,7 +157,7 @@ public class Template extends ARViewActivity
 			else if(lastDis > nowDis)
 				mModel.setScale(mModel.getScale().subtract(new Vector3d(0.001f)));	// tiger is 1f
 			lastDis = nowDis;
-		}*/
+		}
 		return true;
 	}
 	
@@ -122,7 +165,7 @@ public class Template extends ARViewActivity
 	protected int getGUILayout() 
 	{
 		// Attaching layout to the activity
-		return R.layout.template; 
+		return R.layout.template;	// return to ARViewActivity, that change layout from main to template
 	}
 
 	public void onButtonClick(View v)
@@ -135,6 +178,8 @@ public class Template extends ARViewActivity
 	{
 		try
 		{
+			mModelVector = new IGeometryVector();	// store model for control
+			
 			// Getting a file path for tracking configuration XML file
 			String trackingConfigFile = AssetsManager.getAssetPath("TrackingData_MarkerlessFast.xml");
 			
@@ -144,21 +189,25 @@ public class Template extends ARViewActivity
 			MetaioDebug.log("Tracking data loaded: " + result); 
 	        
 			// Getting a file path for a 3D geometry
-			String metaioManModel = AssetsManager.getAssetPath("metaioman.md2");			
+			String metaioManModel = AssetsManager.getAssetPath("metaioman.md2");
 			if (metaioManModel != null) 
 			{
 				// Loading 3D geometry
 				mModel = metaioSDK.createGeometry(metaioManModel);
+				mModelVector.add(mModel);	// add in vector
 				
 				if (mModel != null) 
 				{
 					mGestureHandler.addObject(mModel, 1);	// gesture addition
+					mModel.setName("Id 0");					// set Name
 					// Set geometry properties
 					mModel.setTranslation(new Vector3d(0, 0, 0));
-					mModel.setRotation(new Rotation(200f, 0f, 0f));
+					mModel.setRotation(new Rotation(-radiansConst, 0f, 0f));
 					
 					mModel.setScale(0.08f);
-					mModel.setAnimationSpeed(120f);
+					mModel.setAnimationSpeed(90f);
+					
+					createKaGeBunShin();	// other model should be load
 				}
 				else
 					MetaioDebug.log(Log.ERROR, "Error loading geometry: "+metaioManModel);
@@ -169,57 +218,94 @@ public class Template extends ARViewActivity
 		}
 	}
 	
-	private void danceStyle() {
+	private void createKaGeBunShin() {
 		String metaioManModel = AssetsManager.getAssetPath("metaioman.md2");
-		kaGeBunShin = metaioSDK.createGeometry(metaioManModel);	// add for kagebunshin
 		
-//		add for test kagebunshin
-		mGestureHandler.addObject(kaGeBunShin, 1);	// gesture addition
-		// Set geometry properties
-		kaGeBunShin.setTranslation(new Vector3d(100, 100, 100));
-		kaGeBunShin.setRotation(new Rotation(200f, 0f, 0f));
-		
-		kaGeBunShin.setScale(0.08f);
-		kaGeBunShin.setAnimationSpeed(120f);
-		
-		kaGeBunShin.setVisible(false);
-		//	add for test kagebunshin
+		for(int i = 0 ; i < 4 ; i++){
+			kaGeBunShin = metaioSDK.createGeometry(metaioManModel);
+			mGestureHandler.addObject(kaGeBunShin, 2+i);	// add to gesture handler
+			// Set geometry properties
+			int line = 180;
+			switch (i) {
+			case 0:
+				kaGeBunShin.setTranslation(new Vector3d(-line, line, 0));
+				break;
+			case 1:
+				kaGeBunShin.setTranslation(new Vector3d(line, line, 0));
+				break;
+			case 2:
+				kaGeBunShin.setTranslation(new Vector3d(-line, -line, 0));
+				break;
+			case 3:
+				kaGeBunShin.setTranslation(new Vector3d(line, -line, 0));
+				break;
+			}
+			
+			kaGeBunShin.setRotation(new Rotation(-radiansConst, 0f, 0f));
+			kaGeBunShin.setScale(0.08f);
+			kaGeBunShin.setAnimationSpeed(90f);
+			
+			//kaGeBunShin.setVisible(false);
+			kaGeBunShin.setVisible(true);
+			
+			kaGeBunShin.setName("Id "+(i+1));
+			mModelVector.add(kaGeBunShin);
+		}
 	}
 	
 	@Override
 	protected void onGeometryTouched(IGeometry geometry) 
 	{
-		//System.out.println("geometry touch");
-		//System.out.println(mModel.getAnimationNames().size());
-		/*for (int i = 0 ; i < mModel.getAnimationNames().size() ; i++) {
-			System.out.println(mModel.getAnimationNames().get(i));
-		}*/
+		//System.out.println("model animation size: "+mModel.getAnimationNames().size());
+		/*for (int i = 0 ; i < mModel.getAnimationNames().size() ; i++)
+			System.out.println(mModel.getAnimationNames().get(i));*/
+		System.out.println(geometry.getName());
 		if(!isStartAnimation){
+			System.out.println("model has "+mModelVector.size());
 			playSound();
 			geometry.startAnimation("dance_start", true);
 			isStartAnimation = true;
 		}
 		else{
 			//geometry stop
-		}
-		
+		}	
 	}
 	
 	private void playSound()
 	{
-		try{
-			MetaioDebug.log("Playing sound");
-			mMediaPlayer.start();
-		}catch (Exception e){
-			MetaioDebug.log("Error playing sound: "+e.getMessage());
-		}
+		MetaioDebug.log("Playing sound");
+		mMediaPlayer.start();
+		Thread MediaTimeControl = new Thread(){		// new thread for send music time
+			public void run() {
+				while (true) {
+					int second = mMediaPlayer.getCurrentPosition()/1000; 
+					if(second == 3){
+						Message msg = new Message();
+						msg.what = 1;
+						
+						// send data using bundle
+						/*Bundle countBundle = new Bundle();
+	                    countBundle.putInt("count", i+1);
+	                    countBundle.putString(key, value);
+	      				msg.setData(countBundle);*/
+						
+						danceHandler.sendMessage(msg);
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			};
+		};
+		MediaTimeControl.start();
 	}
 	
 	@Override
 	public void onSurfaceChanged(int width, int height) 
 	{
 		super.onSurfaceChanged(width, height);
-		
 		// Update mid point of the view
 		mMidPoint.setX(width/2f);
 		mMidPoint.setY(height/2f);
@@ -233,6 +319,7 @@ public class Template extends ARViewActivity
 	{
 		return mCallbackHandler;
 	}
+	
 	
 	final class MetaioSDKCallbackHandler extends IMetaioSDKCallback 
 	{
@@ -312,8 +399,6 @@ public class Template extends ARViewActivity
 		{
 			MetaioDebug.log("The current visual search state is: " + state);
 		}
-
-
 	}
 	
 }

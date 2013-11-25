@@ -1,41 +1,140 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <TrackingData>
 	<Sensors>
-		<Sensor Subtype="FAST" Type="FeatureBasedSensorSource">
-			<SensorID>FeatureBasedSensorSource_0</SensorID>
-			<Parameters/>
+		<Sensor Type="FeatureBasedSensorSource" Subtype="Fast">
+			<SensorID>FeatureTracking1</SensorID>
+			<Parameters>
+				<FeatureDescriptorAlignment>regular</FeatureDescriptorAlignment>
+				<MaxObjectsToDetectPerFrame>5</MaxObjectsToDetectPerFrame>
+				<MaxObjectsToTrackInParallel>1</MaxObjectsToTrackInParallel>
+				<SimilarityThreshold>0.7</SimilarityThreshold>
+			</Parameters>
+
 			<SensorCOS>
-				<SensorCosID>aee41593f2332ebc1a735edbe7141c44</SensorCosID>
+				<SensorCosID>Patch1</SensorCosID>	<!-- need to add -->
 				<Parameters>
+					<ReferenceImage>metaioman_target.png</ReferenceImage>
 					<SimilarityThreshold>0.7</SimilarityThreshold>
-					<!--	Small scale version of the original image. Note that 
-							some image information was extracted and is stored 
-							separately in the file specified in below <Map> tag. -->
-					<ReferenceImage HeightMM="360" WidthMM="360">aee41593f2332ebc1a735edbe7141c44.pgm</ReferenceImage>
-					<!--	Reference to a map file that contains precomputed 
-							features for the target to be tracked. This ensures 
-							smaller TrackingData size and faster SDK 
-							initialization. -->
-					<Map>aee41593f2332ebc1a735edbe7141c44.f2b</Map>
 				</Parameters>
 			</SensorCOS>
+			
+			<!-- SensorCOS add by me -->
+			<SensorCOS>
+				<SensorCosID>Patch2</SensorCosID>	<!-- need to add -->
+				<Parameters>
+					<ReferenceImage>beautiful.png</ReferenceImage>
+					<SimilarityThreshold>0.7</SimilarityThreshold>
+				</Parameters>
+			</SensorCOS>
+			<!-- SensorCOS add by me -->
+			
 		</Sensor>
 	</Sensors>
+	
 	<Connections>
 		<COS>
-			<Name>ttu_450_1</Name>
+			<Name>MarkerlessCOS1</Name>
 			<Fuser Type="SmoothingFuser">
 				<Parameters>
-					<AlphaRotation>0.5</AlphaRotation>
+					<KeepPoseForNumberOfFrames>2</KeepPoseForNumberOfFrames>
+					<GravityAssistance></GravityAssistance>
 					<AlphaTranslation>0.8</AlphaTranslation>
-					<GammaRotation>0.5</GammaRotation>
 					<GammaTranslation>0.8</GammaTranslation>
-					<KeepPoseForNumberOfFrames>0</KeepPoseForNumberOfFrames>
+					<AlphaRotation>0.5</AlphaRotation>
+					<GammaRotation>0.5</GammaRotation>
+					<ContinueLostTrackingWithOrientationSensor>false</ContinueLostTrackingWithOrientationSensor>
 				</Parameters>
 			</Fuser>
-			<SensorSource Trigger="1">
-				<SensorID>FeatureBasedSensorSource_0</SensorID>
-				<SensorCosID>aee41593f2332ebc1a735edbe7141c44</SensorCosID>
+
+			<SensorSource>
+				<SensorID>FeatureTracking1</SensorID>
+				<SensorCosID>Patch1</SensorCosID>
+				<HandEyeCalibration>
+					<TranslationOffset>
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+					</TranslationOffset>
+					<RotationOffset>
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+						<W>1</W>
+					</RotationOffset>
+				</HandEyeCalibration>
+				<COSOffset>
+					<TranslationOffset>
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+					</TranslationOffset>
+					<RotationOffset>
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+						<W>1</W>
+					</RotationOffset>
+				</COSOffset>
+			</SensorSource>
+			<!-- SensorSource add by me -->
+			<SensorSource trigger="2">
+				<SensorID>FeatureTracking1</SensorID>
+				<SensorCosID>Patch2</SensorCosID>
+				<HandEyeCalibration>
+					<TranslationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+					</TranslationOffset>
+					<RotationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+						<w>1</w>
+					</RotationOffset>
+				</HandEyeCalibration>
+				<COSOffset>
+					<TranslationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+					</TranslationOffset>
+					<RotationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+						<w>1</w>
+					</RotationOffset>
+				</COSOffset>
+			</SensorSource>
+			<!-- SensorSource add by me -->
+		</COS>
+
+		<!--	The commented lines below show how another COS can be added to 
+				the configuration. This can be used together with the 
+				commented-out SensorCOS part in the Sensor definition above to 
+				create another COS. Note however that the robust tracker cannot
+				track multiple objects in parallel, it will always only track 
+				one of the defined objects at the same time. 
+				-->
+		<!--
+		<COS>
+			<Name>MarkerlessCOS2</Name>
+			<Fuser Type="BestQualityFuser">
+				<Parameters>
+					<KeepPoseForNumberOfFrames>2</KeepPoseForNumberOfFrames>
+					<GravityAssistance></GravityAssistance>
+					<AlphaTranslation>0.8</AlphaTranslation>
+					<GammaTranslation>0.8</GammaTranslation>
+					<AlphaRotation>0.5</AlphaRotation>
+					<GammaRotation>0.5</GammaRotation>
+					<ContinueLostTrackingWithOrientationSensor>false</ContinueLostTrackingWithOrientationSensor>
+				</Parameters>
+			</Fuser>
+
+			<SensorSource>
+				<SensorID>FeatureTracking1</SensorID>
+				<SensorCosID>Patch2</SensorCosID>
 				<HandEyeCalibration>
 					<TranslationOffset>
 						<X>0</X>
@@ -64,5 +163,7 @@
 				</COSOffset>
 			</SensorSource>
 		</COS>
+		-->
+
 	</Connections>
 </TrackingData>
