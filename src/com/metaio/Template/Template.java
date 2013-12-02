@@ -42,12 +42,15 @@ public class Template extends ARViewActivity
 	float y;
 	double lastDis = 0;
 	boolean isStartAnimation = false;
-	float radiansConst = (float) 1.5707957651346171970720366937891;	// close 90 degrees
+	float radiansConst = (float) 1.5707957651346171970720366937891 *0;	// if *1 close 90 degrees
+	float rightAngleConst = (float) 1.5707957651346171970720366937891;	// 90 degree
+	float scale = (float) 0.04;
 	
 	private int mGestureMask;
 	private GestureHandlerAndroid mGestureHandler;
 	private MediaPlayer mMediaPlayer;
-	private Handler danceHandler;
+	static private DanceHandler danceHandler;
+	//private Handler danceHandler;
 	
 	@SuppressLint("HandlerLeak")
 	@Override
@@ -74,39 +77,7 @@ public class Template extends ARViewActivity
 		}
 		
 		// here according to music time setting dancing style
-		danceHandler = new Handler(){
-			public void handleMessage(Message msg) {	// while get message from Media Control Thread
-				// according to the music to do what you want to do
-				switch (msg.what) {
-				case 1:		// rotate one circle
-					new Thread(){
-						public void run() {
-							IGeometry tmpModel = mModelVector.get(0);
-							for(float i = 0 ; i < (4 * radiansConst) ; i+=0.01){
-								tmpModel.setRotation(new Rotation(-radiansConst, i, 0f));
-								try {
-									Thread.sleep(10);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
-							}
-						};
-					}.start();
-					break;
-				case 2:
-					
-					break;
-				case 3:
-					
-					break;
-				case 4:
-					
-					break;
-				default:
-					
-				}
-			};
-		};
+		danceHandler = new DanceHandler();
 	}
 	
 	@Override
@@ -195,7 +166,6 @@ public class Template extends ARViewActivity
 				// Loading 3D geometry
 				mModel = metaioSDK.createGeometry(metaioManModel);
 				mModelVector.add(mModel);	// add in vector
-				
 				if (mModel != null) 
 				{
 					mGestureHandler.addObject(mModel, 1);	// gesture addition
@@ -203,8 +173,7 @@ public class Template extends ARViewActivity
 					// Set geometry properties
 					mModel.setTranslation(new Vector3d(0, 0, 0));
 					mModel.setRotation(new Rotation(-radiansConst, 0f, 0f));
-					
-					mModel.setScale(0.08f);
+					mModel.setScale(scale);
 					mModel.setAnimationSpeed(90f);
 					
 					createKaGeBunShin();	// other model should be load
@@ -212,7 +181,6 @@ public class Template extends ARViewActivity
 				else
 					MetaioDebug.log(Log.ERROR, "Error loading geometry: "+metaioManModel);
 			}
-			
 		}catch (Exception e){
 			
 		}
@@ -242,11 +210,10 @@ public class Template extends ARViewActivity
 			}
 			
 			kaGeBunShin.setRotation(new Rotation(-radiansConst, 0f, 0f));
-			kaGeBunShin.setScale(0.08f);
+			kaGeBunShin.setScale(scale);
 			kaGeBunShin.setAnimationSpeed(90f);
 			
-			//kaGeBunShin.setVisible(false);
-			kaGeBunShin.setVisible(true);
+			kaGeBunShin.setVisible(false);
 			
 			kaGeBunShin.setName("Id "+(i+1));
 			mModelVector.add(kaGeBunShin);
@@ -263,7 +230,9 @@ public class Template extends ARViewActivity
 		if(!isStartAnimation){
 			System.out.println("model has "+mModelVector.size());
 			playSound();
-			geometry.startAnimation("dance_start", true);
+			for(int i = 0 ; i < mModelVector.size() ; i++){
+				mModelVector.get(i).startAnimation("dance_start", true);
+			}
 			isStartAnimation = true;
 		}
 		else{
@@ -277,24 +246,54 @@ public class Template extends ARViewActivity
 		mMediaPlayer.start();
 		Thread MediaTimeControl = new Thread(){		// new thread for send music time
 			public void run() {
+				int doOnce = 0; 
 				while (true) {
-					int second = mMediaPlayer.getCurrentPosition()/1000; 
-					if(second == 3){
+					int second = mMediaPlayer.getCurrentPosition()/100;
+					if(second == 36 && doOnce < second){
+						// rotate id_0
 						Message msg = new Message();
 						msg.what = 1;
-						
-						// send data using bundle
-						/*Bundle countBundle = new Bundle();
-	                    countBundle.putInt("count", i+1);
-	                    countBundle.putString(key, value);
-	      				msg.setData(countBundle);*/
-						
+						Bundle bundle = new Bundle();
+	                    bundle.putInt("id", 0);
+	      				msg.setData(bundle);	// set bundle in msg
 						danceHandler.sendMessage(msg);
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+					}
+					if(second == 36 && doOnce < second){
+						// appear id_1
+						Message msg = new Message();
+						msg.what = 2;
+						Bundle bundle = new Bundle();
+						bundle.putInt("id", 1);
+	      				msg.setData(bundle);	// set bundle in msg
+						danceHandler.sendMessage(msg);
+						doOnce = second;
+					}
+					if(second == 75 && doOnce < second){
+						Message msg = new Message();
+						msg.what = 2;
+						Bundle bundle = new Bundle();
+	                    bundle.putInt("id", 2);
+	      				msg.setData(bundle);	// set bundle in msg
+	      				danceHandler.sendMessage(msg);
+						doOnce = second;
+					}
+					if(second == 109 && doOnce < second){
+						Message msg = new Message();
+						msg.what = 2;
+						Bundle bundle = new Bundle();
+	                    bundle.putInt("id", 3);
+	      				msg.setData(bundle);	// set bundle in msg
+	      				danceHandler.sendMessage(msg);
+						doOnce = second;
+					}
+					if(second == 125 && doOnce < second){
+						Message msg = new Message();
+						msg.what = 3;
+						/*Bundle bundle = new Bundle();
+	                    bundle.putInt("id", 4);
+	      				msg.setData(bundle);	// set bundle in msg*/
+	      				danceHandler.sendMessage(msg);
+						doOnce = second;
 					}
 				}
 			};
@@ -320,6 +319,80 @@ public class Template extends ARViewActivity
 		return mCallbackHandler;
 	}
 	
+	
+	@SuppressLint("HandlerLeak")
+	class DanceHandler extends Handler
+	{
+		public void handleMessage(final Message msg) {	// while get message from Media Control Thread
+			// according to the music to do what you want to do
+			super.handleMessage(msg);
+			final Bundle bundle = msg.getData();
+			switch (msg.what) {
+			case 1:		// rotate one circle
+				new MyThread(){
+					public void run() {
+						int id = bundle.getInt("id");
+						IGeometry tmpModel = mModelVector.get(id);
+						for(float i = 0 ; i < (4 * rightAngleConst) ; i+=0.01){
+							tmpModel.setRotation(new Rotation(0f, 0f, i));
+							try {
+								Thread.sleep(10);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					};
+				}.start();
+				break;
+			case 2:		// appear model
+				new MyThread(){
+					public void run() {
+						int id = bundle.getInt("id");
+						IGeometry tmpModel = mModelVector.get(id);
+						tmpModel.setVisible(true);
+					}
+				}.start();
+				break;
+			case 3:
+				new MyThread(){
+					public void run() {
+						boolean glisten = false;
+						for(int i = 0 ; i < 5 * 4 ; i++){	// five rhythm
+							for(int j = 0 ; j < 5 ; j++){	// five model
+								mModelVector.get(j).setVisible(glisten);
+							}
+							try {
+								Thread.sleep(200 - 10*i);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							if(glisten) glisten = false;
+							else glisten = true;
+						}
+					};
+				}.start();
+				break;
+			case 4:
+				
+				break;
+			default:
+				
+			}
+		};
+	}
+	
+	class MyThread extends Thread
+	{
+		int id;
+		
+		public MyThread() {
+			
+		}
+		
+		public MyThread(int id) {
+			this.id = id;
+		}
+	}
 	
 	final class MetaioSDKCallbackHandler extends IMetaioSDKCallback 
 	{

@@ -22,7 +22,15 @@
 			<SensorCOS>
 				<SensorCosID>Patch2</SensorCosID>	<!-- need to add -->
 				<Parameters>
-					<ReferenceImage>beautiful.png</ReferenceImage>
+					<ReferenceImage>beautiful_1.png</ReferenceImage>
+					<SimilarityThreshold>0.7</SimilarityThreshold>
+				</Parameters>
+			</SensorCOS>
+			
+			<SensorCOS>
+				<SensorCosID>Patch3</SensorCosID>	<!-- need to add -->
+				<Parameters>
+					<ReferenceImage>beautiful_2.png</ReferenceImage>
 					<SimilarityThreshold>0.7</SimilarityThreshold>
 				</Parameters>
 			</SensorCOS>
@@ -108,6 +116,39 @@
 				</COSOffset>
 			</SensorSource>
 			<!-- SensorSource add by me -->
+			<!-- SensorSource add by me 2-->
+			<SensorSource trigger="2">
+				<SensorID>FeatureTracking1</SensorID>
+				<SensorCosID>Patch3</SensorCosID>
+				<HandEyeCalibration>
+					<TranslationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+					</TranslationOffset>
+					<RotationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+						<w>1</w>
+					</RotationOffset>
+				</HandEyeCalibration>
+				<COSOffset>
+					<TranslationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+					</TranslationOffset>
+					<RotationOffset>
+						<x>0</x>
+						<y>0</y>
+						<z>0</z>
+						<w>1</w>
+					</RotationOffset>
+				</COSOffset>
+			</SensorSource>
+			<!-- SensorSource add by me 2-->
+			
 		</COS>
 
 		<!--	The commented lines below show how another COS can be added to 
