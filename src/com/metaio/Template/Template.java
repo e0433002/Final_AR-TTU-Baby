@@ -296,56 +296,52 @@ public class Template extends ARViewActivity
 						glistenAllModel();
 						doOnce = second;
 					}
-					if(second == 290 && doOnce < second){	// move right id_1 ~ id_4
-						Message[] msgList = new Message[4];
-						for(int i = 0 ; i < 4 ; i++){
-							moveModel(msgList[i], i+1, dirctX, right, unit);
+					if(second == 290 && doOnce < second){
+						Message[] msgList = new Message[5];
+						for(int i = 1 ; i < 5 ; i++){
+							moveModel(msgList[i], i, dirctX, right, unit);	// move right id_1 ~ id_4
+							rotateModel(msgList[i], i, CCW, 1);				// rotate id_1 ~ id_4
 						}
+						rotateModel(msgList[0], 0, CCW, 1);					// rotate id_0
 						doOnce = second;
 					}
-					if(second == 291 && doOnce < second){	// rotate id_0
-						Message msg = new Message();
-						rotateModel(msg, 0, CCW, 1);
-						doOnce = second;
-					}
-					if(second == 330 && doOnce < second){	// move down id_0 ~ id_4
+					if(second == 330 && doOnce < second){
 						Message[] msgList = new Message[5];
 						for(int i = 0 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctY, down, unit);
+							moveModel(msgList[i], i, dirctY, down, unit);	// move down id_0 ~ id_4
+							rotateModel(msgList[i], i, CW, 1);				// rotate id_0 ~ id_4
 						}
 						doOnce = second;
 					}
-					if(second == 331 && doOnce < second){	// rotate id_0
-						Message msg = new Message();
-						rotateModel(msg, 0, CW, 1);
-						doOnce = second;
-					}
-					if(second == 365 && doOnce < second){	// move left id_1 ~ id_4
-						Message[] msgList = new Message[4];
-						for(int i = 0 ; i < 4 ; i++){
-							moveModel(msgList[i], i+1, dirctX, left, unit);
+					if(second == 365 && doOnce < second){
+						Message[] msgList = new Message[5];
+						for(int i = 1 ; i < 5 ; i++){
+							moveModel(msgList[i], i, dirctX, left, unit);	// move left id_1 ~ id_4
+							rotateModel(msgList[i], i, CW, 1);				// rotate id_1 ~ id_4
 						}
+						rotateModel(msgList[0], 0, CW, 1);					// rotate id_0
 						doOnce = second;
 					}
-					if(second == 366 && doOnce < second){	// rotate id_0
-						Message msg = new Message();
-						rotateModel(msg, 0, CW, 1);
-						doOnce = second;
-					}
-					if(second == 400 && doOnce < second){	// move up id_0 ~ id_4
+					if(second == 400 && doOnce < second){
 						Message[] msgList = new Message[5];
 						for(int i = 0 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctY, up, unit);
+							moveModel(msgList[i], i, dirctY, up, unit);	// move up id_0 ~ id_4
+							rotateModel(msgList[i], i, CW, 1);			// rotate id_0
 						}
-						doOnce = second;
-					}
-					if(second == 401 && doOnce < second){	// rotate id_0
-						Message msg = new Message();
-						rotateModel(msg, 0, CCW, 1);
 						doOnce = second;
 					}
 					if(second == 420 && doOnce < second){
 						glistenAllModel();
+						doOnce = second;
+					}
+					if(second == 440 && doOnce < second){
+						mModelVector.get(0).startAnimation("tapd_start", true);
+						doOnce = second;
+					}
+					if(second == 675 && doOnce < second){
+						for(int i = 0 ; i < 5 ; i++){
+							mModelVector.get(i).startAnimation("end_start");
+						}
 						doOnce = second;
 					}
 				}
@@ -520,7 +516,7 @@ public class Template extends ARViewActivity
 			msg.what = 2;	// appear
 			Bundle bundle = new Bundle();
 			bundle.putInt("id", id);	// id_1
-				msg.setData(bundle);	// set bundle in msg
+			msg.setData(bundle);	// set bundle in msg
 			danceHandler.sendMessage(msg);
 		}
 		
