@@ -1,13 +1,8 @@
 // Copyright 2007-2013 metaio GmbH. All rights reserved.
 package com.metaio.Template;
 
-import java.io.FileInputStream;
-
 import android.annotation.SuppressLint;
-import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -49,10 +44,7 @@ public class Template extends ARViewActivity
 	
 	private int mGestureMask;
 	private GestureHandlerAndroid mGestureHandler;
-	private MediaPlayer mMediaPlayer;
-	MediaTimeThread mediaTimeControl;
-	static private DanceHandler danceHandler;
-	//private Handler danceHandler;
+	MusicScore musicScore;
 	
 	@SuppressLint("HandlerLeak")
 	@Override
@@ -66,20 +58,6 @@ public class Template extends ARViewActivity
 		mGestureHandler = new GestureHandlerAndroid(metaioSDK, mGestureMask);
 		
 		mMidPoint = new Vector2d();
-		
-		// music load
-		/*try {
-			mMediaPlayer = new MediaPlayer();
-			FileInputStream fis = new FileInputStream(AssetsManager.getAssetPath("psy_gangnamStyle.mp3"));
-			mMediaPlayer.setDataSource(fis.getFD());
-			mMediaPlayer.prepare();
-			fis.close();
-		} catch (Exception e) {
-			mMediaPlayer = null;
-		}*/
-		
-		// here according to music time setting dancing style
-		danceHandler = new DanceHandler();
 	}
 	
 	@Override
@@ -245,109 +223,8 @@ public class Template extends ARViewActivity
 	
 	private void playSound()
 	{
-		MetaioDebug.log("Playing sound");
-		try {
-			mMediaPlayer = new MediaPlayer();
-			FileInputStream fis = new FileInputStream(AssetsManager.getAssetPath("psy_gangnamStyle.mp3"));
-			mMediaPlayer.setDataSource(fis.getFD());
-			mMediaPlayer.prepare();
-			fis.close();
-		} catch (Exception e) {
-			mMediaPlayer = null;
-		}
-		mMediaPlayer.start();
-		
-		mediaTimeControl = new MediaTimeThread(){		// new thread for send music time
-			public void run() {
-				int doOnce = 0; 
-				while (true) {
-					int second = mMediaPlayer.getCurrentPosition()/100;
-					if(second == 36 && doOnce < second){
-						appearModel(1);
-						doOnce = second;
-					}
-					if(second == 75 && doOnce < second){
-						appearModel(2);
-						doOnce = second;
-					}
-					if(second == 109 && doOnce < second){
-						appearModel(3);
-						doOnce = second;
-					}
-					if(second == 125 && doOnce < second){
-						glistenAllModel();
-						doOnce = second;
-					}
-					if(second == 150 && doOnce < second){	// rotate id_0 ~ id_4
-						Message[] msgList = new Message[5];
-						for(int i = 0 ; i < 5 ; i++){
-							rotateModel(msgList[i], i, CW, 4);
-						}
-						doOnce = second;
-					}
-					if(second == 220 && doOnce < second){	// rotate id_0 ~ id_4
-						Message[] msgList = new Message[5];
-						for(int i = 0 ; i < 5 ; i++){
-							rotateModel(msgList[i], i, CCW, 4);	// notice 4 model
-						}
-						doOnce = second;
-					}
-					if(second == 275 && doOnce < second){
-						glistenAllModel();
-						doOnce = second;
-					}
-					if(second == 290 && doOnce < second){
-						Message[] msgList = new Message[5];
-						for(int i = 1 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctX, right, unit);	// move right id_1 ~ id_4
-							rotateModel(msgList[i], i, CCW, 1);				// rotate id_1 ~ id_4
-						}
-						rotateModel(msgList[0], 0, CCW, 1);					// rotate id_0
-						doOnce = second;
-					}
-					if(second == 330 && doOnce < second){
-						Message[] msgList = new Message[5];
-						for(int i = 0 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctY, down, unit);	// move down id_0 ~ id_4
-							rotateModel(msgList[i], i, CW, 1);				// rotate id_0 ~ id_4
-						}
-						doOnce = second;
-					}
-					if(second == 365 && doOnce < second){
-						Message[] msgList = new Message[5];
-						for(int i = 1 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctX, left, unit);	// move left id_1 ~ id_4
-							rotateModel(msgList[i], i, CW, 1);				// rotate id_1 ~ id_4
-						}
-						rotateModel(msgList[0], 0, CW, 1);					// rotate id_0
-						doOnce = second;
-					}
-					if(second == 400 && doOnce < second){
-						Message[] msgList = new Message[5];
-						for(int i = 0 ; i < 5 ; i++){
-							moveModel(msgList[i], i, dirctY, up, unit);	// move up id_0 ~ id_4
-							rotateModel(msgList[i], i, CW, 1);			// rotate id_0
-						}
-						doOnce = second;
-					}
-					if(second == 420 && doOnce < second){
-						glistenAllModel();
-						doOnce = second;
-					}
-					if(second == 440 && doOnce < second){
-						mModelVector.get(0).startAnimation("tapd_start", true);
-						doOnce = second;
-					}
-					if(second == 675 && doOnce < second){
-						for(int i = 0 ; i < 5 ; i++){
-							mModelVector.get(i).startAnimation("end_start");
-						}
-						doOnce = second;
-					}
-				}
-			};
-		};
-		mediaTimeControl.start();
+		musicScore = new MusicScore(unit, mModelVector);
+		musicScore.playSound();
 	}
 	
 	@Override
@@ -367,188 +244,6 @@ public class Template extends ARViewActivity
 	{
 		return mCallbackHandler;
 	}
-	
-	
-	@SuppressLint("HandlerLeak")
-	class DanceHandler extends Handler
-	{
-		public void handleMessage(final Message msg) {	// while get message from Media Control Thread
-			// according to the music to do what you want to do
-			super.handleMessage(msg);
-			final Bundle bundle = msg.getData();
-			switch (msg.what) {
-			case 1:		// rotate one circle
-				new MyThread(){
-					public void run() {
-						int id = bundle.getInt("id");
-						String clockwise = bundle.getString("clockwise");
-						int rightAngleNum = bundle.getInt("rightAngleNum");
-						int direct = (clockwise.equals("CCW")) ? 1 : -1;
-						IGeometry tmpModel = mModelVector.get(id);
-						float nowAngle = tmpModel.getRotation().getEulerAngleRadians().getZ();
-						for(float i = 0 ; i < (rightAngleNum * rightAngleConst) ; i+=0.01){
-							tmpModel.setRotation(new Rotation(0f, 0f, nowAngle + direct * i));
-							delayForRotate();
-						}
-					};
-				}.start();
-				break;
-			case 2:		// appear model
-				new MyThread(){
-					public void run() {
-						int id = bundle.getInt("id");
-						IGeometry tmpModel = mModelVector.get(id);
-						tmpModel.setVisible(true);
-					}
-				}.start();
-				break;
-			case 3:		// glisten model
-				new MyThread(){
-					public void run() {
-						int tempo = 18;
-						boolean glisten = false;
-						for(int i = 0 ; i < tempo ; i++){	// five rhythm
-							for(int j = 0 ; j < 5 ; j++){	// five model
-								mModelVector.get(j).setVisible(glisten);
-							}
-							delayForGlisten(i, tempo);				// using thread sleep
-							if(glisten) glisten = false;
-							else glisten = true;
-						}
-					};
-				}.start();
-				break;
-			case 4:		// move to some direction
-				new MyThread(){
-					public void run() {
-						int id = bundle.getInt("id");
-						String directHead = "move ";
-						String directX = bundle.getString("directX");
-						String directY = bundle.getString("directY");
-						IGeometry tmpModel = mModelVector.get(id);
-						Vector3d mTrans = tmpModel.getTranslation();
-						float mX = 0;
-						float mY = 0;
-						int movingDis = bundle.getInt("movingDis");
-						int movingX = getXDirect(directHead+directX);
-						int movingY = getYDirect(directHead+directY);
-						
-						for(int i = 0 ; i < movingDis ; i++){
-							mX = mTrans.getX();
-							mY = mTrans.getY();
-							mTrans.setX(mX + movingX);
-							mTrans.setY(mY + movingY);
-							tmpModel.setTranslation(mTrans);
-							try {
-								Thread.sleep(15);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					};
-				}.start();
-				break;
-			default:
-				
-			}
-		};
-	}
-	
-	class MyThread extends Thread
-	{
-		int id;
-		
-		public MyThread() {
-			
-		}
-		
-		public MyThread(int id) {
-			this.id = id;
-		}
-		
-		public void delayForRotate(){
-			try {
-				Thread.sleep(8);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		public void delayForGlisten(int i, int tempo){
-			try {
-				Thread.sleep(10*tempo - 10*i);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		public int getXDirect(String direct){
-			if(direct.equals("move right")) return 1;
-			else if(direct.equals("move left")) return -1;
-			else return 0;
-		}
-		
-		public int getYDirect(String direct){
-			if(direct.equals("move up")) return 1;
-			else if(direct.equals("move down")) return -1;
-			else return 0;
-		}
-	}
-	
-	
-	class MediaTimeThread extends Thread
-	{
-		final String CW = "CW";	// clockwise
-		final String CCW = "CCW";	// counter clockwise
-		final String dirctX = "directX";
-		final String dirctY = "directY";
-		final String up = "up";
-		final String down = "down";
-		final String right = "right";
-		final String left = "left";
-		
-		public MediaTimeThread(){
-			
-		}
-		
-		public void appearModel(int id){
-			Message msg = new Message();
-			msg.what = 2;	// appear
-			Bundle bundle = new Bundle();
-			bundle.putInt("id", id);	// id_1
-			msg.setData(bundle);	// set bundle in msg
-			danceHandler.sendMessage(msg);
-		}
-		
-		public void glistenAllModel(){
-			Message msg = new Message();
-			msg.what = 3;	// glisten id_0 ~ id_4
-			danceHandler.sendMessage(msg);
-		}
-		
-		public void rotateModel(Message msg, int id, String clockwise, int rightAngleNum){
-			msg = new Message();
-			msg.what = 1;
-			Bundle bundle = new Bundle();
-            bundle.putInt("id", id);
-            bundle.putString("clockwise", clockwise);	// CW or CCW
-            bundle.putInt("rightAngleNum", rightAngleNum);		// 360 degree
-			msg.setData(bundle);	// set bundle in msg
-			danceHandler.sendMessage(msg);
-		}
-		
-		public void moveModel(Message msg, int id, String coordinate, String direct, int unit){
-			msg = new Message();
-			msg.what = 4;
-			Bundle bundle = new Bundle();
-            bundle.putInt("id", id);
-            bundle.putString(coordinate, direct);
-            bundle.putInt("movingDis", unit);
-			msg.setData(bundle);	// set bundle in msg
-			danceHandler.sendMessage(msg);
-		}
-	}
-	
 	
 	final class MetaioSDKCallbackHandler extends IMetaioSDKCallback 
 	{
